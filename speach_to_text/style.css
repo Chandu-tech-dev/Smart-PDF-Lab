@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#content {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 700px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+h1 {
+  font-weight: 600;
+  font-size: 2.5rem;
+  margin-bottom: 25px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+button {
+  margin: 10px 5px;
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(108, 99, 255, 0.6);
+  background: #6c63ff;
+  color: white;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+button:hover {
+  background: #5751d9;
+  box-shadow: 0 8px 20px rgba(87, 81, 217, 0.8);
+}
+
+button#delete {
+  background-color: rgba(255, 0, 0, 0.7);
+}
+
+button#delete:hover {
+  background-color: rgba(204, 0, 0, 0.8);
+}
+
+textarea {
+  width: 90%;
+  height: 150px;
+  padding: 15px 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 1.1rem;
+  resize: none;
+  margin-bottom: 20px;
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: 'Poppins', Arial, sans-serif;
+  transition: background 0.3s ease;
+}
+
+textarea::placeholder {
+  color: #ddd;
+}
+
+textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 8px #a29bfe;
+}
+
+.notes-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+}
+
+.notes-container h2 {
+  color: #fff;
+  margin-bottom: 15px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+ol {
+  list-style-type: none;
+  padding: 0;
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+li {
+  background: #0ac8d6;
+  text-align: center;
+  margin: 5px 0;
+  padding: 12px;
+  border-radius: 12px;
+  color: white;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 10px rgba(10, 200, 214, 0.6);
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 1.2em;
+    padding: 30px 15px;
+  }
+
+  #content {
+    max-width: 100%;
+    padding: 30px 20px;
+    margin-top: 20px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 200px;
+    font-size: 1.2em;
+  }
+
+  button {
+    font-size: 1.2em;
+    padding: 15px 25px;
+    margin: 15px 10px;
+  }
+
+  .notes-container {
+    width: 100%;
+    margin: 20px auto;
+    padding: 25px;
+  }
+
+  ol li {
+    font-size: 1.2em;
+    padding: 15px;
+  }
+}

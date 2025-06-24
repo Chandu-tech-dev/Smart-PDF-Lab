@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Speech to Text Notes App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div id="content">
+
+
+  <div class="container">
+    <h1>🎤 Speech to Text Notes</h1>
+    <button id="start">Start Listening</button>
+    <button id="stop">Stop</button>
+    <textarea id="text" placeholder="Your voice will appear here..."></textarea>
+    <button id="save">Save Note</button>
+    <button id="delete" style="background-color:rgba(255, 0, 0, 0.618);">Delete All Notes</button>
+    <button id="Download">Download</button>
+  </div>
+
+  <div class="notes-container">
+    <h2>📝 Saved Notes</h2>
+    <ol id="notesList">
+    </ol>
+  </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="script.js"></script>
+  <footer>
+    <p style="text-align: center; font-size: 20px;">Developed by Saarika and Groups</p>
+  </footer>
+</body>
+</html>

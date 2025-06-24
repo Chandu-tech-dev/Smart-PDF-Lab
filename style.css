@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+header {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  padding: 15px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 8px 15px;
+  border-radius: 12px;
+  transition: background 0.3s ease;
+}
+
+.nav-link:hover {
+  background: #6c63ff;
+  box-shadow: 0 6px 15px rgba(108, 99, 255, 0.6);
+}
+
+.hero-section {
+  text-align: center;
+  padding: 100px 20px 60px 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.hero-section h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.hero-section p {
+  font-size: 1.3rem;
+  color: #ddd;
+}
+
+.about-section, .services-section {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.about-section h2, .services-section h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.services-section .service-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+}
+
+.service-card {
+  background: rgba(7, 34, 238, 0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 25px 35px;
+  border-radius: 15px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-decoration: none;
+  box-shadow: 0 6px 15px rgba(16, 4, 244, 0.6);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  width: 220px;
+  text-align: center;
+}
+
+.service-card:hover {
+  background: #5751d9;
+  box-shadow: 0 8px 20px rgba(87, 81, 217, 0.8);
+}
+
+footer {
+  margin: 60px 0 30px 0;
+  font-size: 25px;
+  color: #ccc;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  text-align: center;
+  width: 100%;
+  position: relative;
+  bottom: 0;
+}
+
+
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .nav-list {
+    flex-direction:row;
+    gap: 15px;
+  }
+
+  .service-card {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .hero-section {
+    padding: 60px 20px 40px 20px;
+  }
+
+  .about-section, .services-section {
+    margin: 20px 10px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+
+  .hero-section p {
+    font-size: 1rem;
+  }
+
+  .about-section h2, .services-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .service-card {
+    padding: 20px;
+    font-size: 1rem;
+  }
+}
+
+.service-card {
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+}
