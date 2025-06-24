@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Save Text as Image</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset some default styles */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 10px;
+      font-family: 'Poppins', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      margin-top: 100px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      max-width: 600px;
+      width: 100%;
+      backdrop-filter: blur(10px);
+    }
+
+    h2 {
+      font-weight: 600;
+      font-size: 2.5rem;
+      margin-bottom: 25px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 15px 20px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      border: none;
+      resize: vertical;
+      box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transition: background 0.3s ease;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+
+    textarea::placeholder {
+      color: #ddd;
+    }
+
+    textarea:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 8px #a29bfe;
+    }
+
+    button {
+      margin-top: 20px;
+      background: #6c63ff;
+      color: white;
+      border: none;
+      padding: 15px 35px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 15px rgba(108, 99, 255, 0.6);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+
+    button:hover {
+      background: #5751d9;
+      box-shadow: 0 8px 20px rgba(87, 81, 217, 0.8);
+    }
+
+    #myCanvas {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      background-color: #1e1e2f;
+      border: none;
+    }
+
+    #downloadLink {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 12px 30px;
+      background: #ff6b6b;
+      color: white;
+      font-weight: 600;
+      border-radius: 12px;
+      text-decoration: none;
+      box-shadow: 0 6px 15px rgba(255, 107, 107, 0.6);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+
+    #downloadLink:hover {
+      background: #e55a5a;
+      box-shadow: 0 8px 20px rgba(229, 90, 90, 0.8);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 100px;
+      margin-bottom: 0;
+      font-size: 17px;
+      color: #ccc;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px 25px;
+        max-width: 90%;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      textarea {
+        font-size: 1rem;
+        min-height: 100px;
+      }
+
+      button {
+        padding: 12px 25px;
+        font-size: 1rem;
+      }
+
+      #downloadLink {
+        padding: 10px 25px;
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+        height: auto;
+      }
+
+      .container {
+        padding: 15px 20px;
+        max-width: 100%;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      textarea {
+        font-size: 0.9rem;
+        min-height: 80px;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+      }
+
+      #downloadLink {
+        padding: 8px 20px;
+        font-size: 0.9rem;
+      }
+
+      #myCanvas {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Save Text as Image</h2>
+    <textarea id="textInput" placeholder="Enter text here"></textarea>
+    <button onclick="generateImage()">Save as Image</button>
+    <canvas id="myCanvas" width="500" height="300"></canvas>
+    <a id="downloadLink" download="text_image.png">Download Image</a>
+  </div>
+  <script>
+    function generateImage() {
+      const canvas = document.getElementById("myCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // Clear previous content
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Get the text input
+      const text = document.getElementById("textInput").value;
+
+      // Style the text (adjust the font, color, etc.)
+      ctx.fillStyle = "#ffffff";  // Text color (white)
+      ctx.font = "30px Poppins, Arial, sans-serif";     // Font style and size
+      ctx.textAlign = "center";    // Center text horizontally
+      ctx.textBaseline = "middle"; // Center text vertically
+
+      // Draw the text onto the canvas
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+      // Create a link to download the image
+      const link = document.getElementById("downloadLink");
+      link.href = canvas.toDataURL("image/png");
+    }
+  </script>
+</body>
+
+</html>

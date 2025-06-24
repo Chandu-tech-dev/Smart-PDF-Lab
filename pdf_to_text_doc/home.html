@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF Page Selector</title>
+  <link rel="stylesheet" href="style.css" />
+  
+</head>
+
+<body>
+  <h1>PDF Page Selector</h1>
+  <div id="upload-section">
+    <input type="file" id="pdf-upload" accept="application/pdf" />
+  </div>
+  <div id="pages-container"></div>
+  <button id="generate-btn" disabled>Generate New PDF</button>
+  <a id="download-link" download="selected_pages.pdf">Download Selected Pages</a>
+  <a id="loading-link" style="display: none;">
+    <span class="loading-text">Generating PDF...</span>
+    </a>
+    <span class="loading-spinner"></span>
+  </a>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="script.js"></script>
+  <footer>
+    <p style="text-align: center; font-size: 20px;">Developed by Saarika and Groups</p>
+  </footer>
+</body>
+
+</html>
