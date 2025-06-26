@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Image to Text with Language Detection</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+  <h1>🖼 Image to Text + Auto Language OCR</h1>
+  <h2>upload a high Resulation Image and Clear Image </h2>
+  <input type="file" accept="image/*" id="imageInput" onchange="previewImage()" />
+  <div id="loader">Upload a clear printed text image</div>
+
+  <img id="imagePreview" src="" alt="" />
+
+  <br><br>
+  <button onclick="extractText()">🔍 Extract Text</button>
+
+  <div id="langResult"></div>
+
+  <div id="outputText" aria-label="Extracted text will appear here ......"></div>
+  <div id="controls">
+    <button onclick="copyText()">📋 Copy</button>
+    <button onclick="clearText()">🗑 Clear</button>
+    <button onclick="saveAsPDF()">💾 Save as PDF</button>
+  </div>
+  <script>
+    let selectedImage = null;
+
+    function previewImage() {
+      const input = document.getElementById('imageInput');
+      const preview = document.getElementById('imagePreview');
+      const loader = document.getElementById('loader');
+      const output = document.getElementById('outputText');
+
+      if (input.files && input.files[0]) {
+        selectedImage = input.files[0];
+        preview.src = URL.createObjectURL(selectedImage);
+        loader.innerText = "✅ Image loaded. Click 'Extract Text'.";
+      } else {
+        preview.src = '';
+        selectedImage = null;
+        loader.innerText = "❌ No image selected.";
+      }
+    }
+
+    async function extractText() {
+      if (!selectedImage) {
+        document.getElementById('loader').innerText = "❗ Please upload an image first.";
+        return;
+      }
+
+      const loader = document.getElementById('loader');
+      const output = document.getElementById('outputText');
+      const langResult = document.getElementById('langResult');
+
+      loader.innerText = "🔍 Extracting... please wait...";
+      output.innerText = '';
+      langResult.innerText = '';
+
+      try {
+        const result = await Tesseract.recognize(
+          selectedImage,
+          'eng+hin+kan+tam+tel+mar+ben+guj+mal',  // OCR with all common Indian + English
+          {
+            langPath: 'https://tessdata.projectnaptha.com/4.0.0_best/', // hosted traineddata files
+            logger: m => console.log(m)
+          }
+        );
+
+        const extractedText = result.data.text.trim();
+        const detectedLang = result.data.lang;
+
+        output.innerText = extractedText;
+        langResult.innerText = "🌐 Detected Language: " + detectedLang.toUpperCase();
+        loader.innerText = "✅ Text extracted successfully!";
+      } catch (err) {
+        console.error(err);
+        loader.innerText = "❌ OCR failed. Try clearer image.";
+      }
+    }
+
+    function copyText() {
+      const output = document.getElementById("outputText");
+      if (!output.innerText) {
+        alert("Nothing to copy.");
+        return;
+      }
+      const range = document.createRange();
+      range.selectNodeContents(output);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      document.execCommand("copy");
+      alert("📋 Copied to clipboard!");
+    }
+
+    function clearText() {
+      const output = document.getElementById("outputText");
+      output.innerText = '';
+      document.getElementById("langResult").innerText = '';
+      document.getElementById("loader").innerText = "🗑 Text cleared. ";
+      document.getElementById("imageInput").value = '';
+      document.getElementById("imagePreview").src = '';
+      selectedImage = null;
+      document.getElementById("imagePreview").alt = '';
+      document.getElementById("imagePreview").style.display = 'none';
+
+    }
+
+    function saveAsPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const text = document.getElementById("outputText").innerText;
+      const lines = doc.splitTextToSize(text, 180);
+      doc.text(lines, 15, 20);
+      doc.save("Extracted_Text.pdf");
+    }
+  </script>
+
+</body>
+
+</html>
