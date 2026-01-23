@@ -9,7 +9,33 @@ const downloadLink = document.getElementById('download-link');
 let pdfDoc = null;
 let selectedPages = new Set();
 
+const dropZone = document.getElementById('drop-zone');
+
+// Drag and Drop Logic
+dropZone.addEventListener('click', () => pdfUpload.click());
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    pdfUpload.files = files;
+    const event = new Event('change');
+    pdfUpload.dispatchEvent(event);
+  }
+});
+
 pdfUpload.addEventListener('change', async (e) => {
+  if (e.target.files.length === 0) return;
   const file = e.target.files[0];
   if (!file || file.type !== 'application/pdf') {
     alert('Please upload a valid PDF file.');
@@ -17,7 +43,7 @@ pdfUpload.addEventListener('change', async (e) => {
   }
 
   const arrayBuffer = await file.arrayBuffer();
-  pdfDoc = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
   pagesContainer.innerHTML = '';
   selectedPages.clear();

@@ -1,34 +1,60 @@
 <!DOCTYPE html>
+<!-- path: pdf_to_text_doc/home.html -->
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PDF Page Selector</title>
+  <title>PDF Page Selector | Smart PDF Lab</title>
   <link rel="stylesheet" href="style.css" />
-  
 </head>
 
 <body>
-  <h1>PDF Page Selector</h1>
-  <div id="upload-section">
-    <input type="file" id="pdf-upload" accept="application/pdf" />
+  <div class="glow-orb glow-1"></div>
+  <div class="glow-orb glow-2"></div>
+
+  <div class="app-container">
+    <header class="app-header">
+      <a href="../index.html" class="back-link">← Back to Home</a>
+      <h1>PDF Page Selector</h1>
+      <p style="color: var(--text-muted);">Extract specific pages from your PDF and save them as a new file.</p>
+    </header>
+
+    <main class="tool-card">
+      <div id="upload-section">
+        <div class="upload-zone" id="drop-zone">
+          <input type="file" id="pdf-upload" accept="application/pdf" hidden />
+          <div class="icon-upload">📄</div>
+          <h3>Drop PDF file here</h3>
+          <p>or click to browse</p>
+        </div>
+      </div>
+
+      <div id="pages-container"></div>
+
+      <button id="generate-btn" disabled>Generate New PDF</button>
+
+      <!-- Loading State Container -->
+      <div id="loading-container"
+        style="display: none; margin-top: 20px; align-items: center; justify-content: center; gap: 10px;">
+        <span class="loading-text" style="color: var(--text-muted);">Generating PDF...</span>
+        <span class="loading-spinner"></span>
+      </div>
+
+      <a id="download-link" download="selected_pages.pdf">Download Selected Pages</a>
+    </main>
+
+    <footer>
+      <p>Developed by Saarika 💗 and Groups</p>
+    </footer>
   </div>
-  <div id="pages-container"></div>
-  <button id="generate-btn" disabled>Generate New PDF</button>
-  <a id="download-link" download="selected_pages.pdf">Download Selected Pages</a>
-  <a id="loading-link" style="display: none;">
-    <span class="loading-text">Generating PDF...</span>
-    </a>
-    <span class="loading-spinner"></span>
-  </a>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
+  </script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script src="script.js"></script>
-  <footer>
-    <p style="text-align: center; font-size: 20px;">Developed by Saarika and Groups</p>
-  </footer>
 </body>
 
 </html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Merger & Page Selector</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <header class="app-header">
+            <a href="../index.html" class="back-link">← Back to Home</a>
+            <h1>Multi-PDF Page Merger</h1>
+            <p>Upload multiple PDFs, select pages, and merge them into one.</p>
+        </header>
+
+        <main>
+            <div class="upload-zone" id="drop-zone">
+                <input type="file" id="pdf-upload" multiple accept="application/pdf" class="file-input" hidden>
+                <div class="upload-content">
+                    <div class="icon-upload">📄</div>
+                    <h3>Drop multiple PDF files here</h3>
+                    <p>or click to browse</p>
+                </div>
+            </div>
+
+            <div id="status-bar" class="status-bar hidden">
+                <span id="file-count">0 files loaded</span>
+                <span id="selection-count">0 pages selected</span>
+                <button id="clear-all" class="secondary-btn">Clear All</button>
+            </div>
+
+            <div id="preview-container" class="preview-grid">
+                <!-- PDF Pages will be rendered here -->
+            </div>
+
+            <div class="actions-panel">
+                <button id="merge-btn" class="primary-btn" disabled>
+                    <span>Merge Selected Pages</span>
+                </button>
+            </div>
+        </main>
+
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loader" class="loader-overlay hidden">
+        <div class="spinner"></div>
+        <p id="loader-text">Processing...</p>
+    </div>
+    <footer>
+        <p>Developed by Saarika 💗 and Groups</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+
+</html>

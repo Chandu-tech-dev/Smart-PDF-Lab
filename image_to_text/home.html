@@ -3,126 +3,93 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Image to Text with Language Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image to Text Converter</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- CDNs -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
 
-  <h1>🖼 Image to Text + Auto Language OCR</h1>
-  <h2>upload a high Resulation Image and Clear Image </h2>
-  <input type="file" accept="image/*" id="imageInput" onchange="previewImage()" />
-  <div id="loader">Upload a clear printed text image</div>
+  <div id="app-container">
+    <a href="../index.html" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Home
+    </a>
 
-  <img id="imagePreview" src="" alt="" />
+    <h1>🖼 Image to Text Converter</h1>
+    <h2>Upload an image to extract text instantly using AI</h2>
 
-  <br><br>
-  <button onclick="extractText()">🔍 Extract Text</button>
+    <div class="upload-zone" id="drop-zone">
+      <input type="file" accept="image/*" id="imageInput" hidden />
+      <div class="icon-upload">☁️</div>
+      <h3>Drag & Drop or Click to Upload</h3>
+      <p>Supports JPG, PNG, BMP, WEBP</p>
+    </div>
 
-  <div id="langResult"></div>
+    <div id="loader"></div>
 
-  <div id="outputText" aria-label="Extracted text will appear here ......"></div>
-  <div id="controls">
-    <button onclick="copyText()">📋 Copy</button>
-    <button onclick="clearText()">🗑 Clear</button>
-    <button onclick="saveAsPDF()">💾 Save as PDF</button>
+    <img id="imagePreview" src="" alt="" />
+
+    <button onclick="extractText()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      Extract Text
+    </button>
+
+    <div id="langResult"></div>
+
+    <div id="outputText" aria-label="Extracted text will appear here..."></div>
+
+    <div id="controls">
+      <button onclick="copyText()" class="secondary-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy
+      </button>
+
+      <button onclick="saveAsPDF()" class="secondary-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+        Save as PDF
+      </button>
+
+      <button onclick="clearText()" class="secondary-btn" style="color: #ef4444; border-color: rgba(239,68,68,0.3);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        Clear
+      </button>
+    </div>
+
+    <footer>
+      <p> Developed by Saarika 💗 and Groups</p>
+    </footer>
   </div>
-  <script>
-    let selectedImage = null;
 
-    function previewImage() {
-      const input = document.getElementById('imageInput');
-      const preview = document.getElementById('imagePreview');
-      const loader = document.getElementById('loader');
-      const output = document.getElementById('outputText');
-
-      if (input.files && input.files[0]) {
-        selectedImage = input.files[0];
-        preview.src = URL.createObjectURL(selectedImage);
-        loader.innerText = "✅ Image loaded. Click 'Extract Text'.";
-      } else {
-        preview.src = '';
-        selectedImage = null;
-        loader.innerText = "❌ No image selected.";
-      }
-    }
-
-    async function extractText() {
-      if (!selectedImage) {
-        document.getElementById('loader').innerText = "❗ Please upload an image first.";
-        return;
-      }
-
-      const loader = document.getElementById('loader');
-      const output = document.getElementById('outputText');
-      const langResult = document.getElementById('langResult');
-
-      loader.innerText = "🔍 Extracting... please wait...";
-      output.innerText = '';
-      langResult.innerText = '';
-
-      try {
-        const result = await Tesseract.recognize(
-          selectedImage,
-          'eng+hin+kan+tam+tel+mar+ben+guj+mal',  // OCR with all common Indian + English
-          {
-            langPath: 'https://tessdata.projectnaptha.com/4.0.0_best/', // hosted traineddata files
-            logger: m => console.log(m)
-          }
-        );
-
-        const extractedText = result.data.text.trim();
-        const detectedLang = result.data.lang;
-
-        output.innerText = extractedText;
-        langResult.innerText = "🌐 Detected Language: " + detectedLang.toUpperCase();
-        loader.innerText = "✅ Text extracted successfully!";
-      } catch (err) {
-        console.error(err);
-        loader.innerText = "❌ OCR failed. Try clearer image.";
-      }
-    }
-
-    function copyText() {
-      const output = document.getElementById("outputText");
-      if (!output.innerText) {
-        alert("Nothing to copy.");
-        return;
-      }
-      const range = document.createRange();
-      range.selectNodeContents(output);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      document.execCommand("copy");
-      alert("📋 Copied to clipboard!");
-    }
-
-    function clearText() {
-      const output = document.getElementById("outputText");
-      output.innerText = '';
-      document.getElementById("langResult").innerText = '';
-      document.getElementById("loader").innerText = "🗑 Text cleared. ";
-      document.getElementById("imageInput").value = '';
-      document.getElementById("imagePreview").src = '';
-      selectedImage = null;
-      document.getElementById("imagePreview").alt = '';
-      document.getElementById("imagePreview").style.display = 'none';
-
-    }
-
-    function saveAsPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const text = document.getElementById("outputText").innerText;
-      const lines = doc.splitTextToSize(text, 180);
-      doc.text(lines, 15, 20);
-      doc.save("Extracted_Text.pdf");
-    }
-  </script>
-
+  <script src="script.js"></script>
 </body>
 
 </html>

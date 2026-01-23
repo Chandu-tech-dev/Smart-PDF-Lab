@@ -5,188 +5,219 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Save Text as Image</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <style>
-    /* Reset some default styles */
+    :root {
+      --bg-color: #0f172a;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.5);
+      --secondary: #a855f7;
+      --accent: #ec4899;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
     }
 
     body {
-      margin: 10px;
-      font-family: 'Poppins', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
+      background: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 40%);
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      padding: 20px;
-      text-align: center;
+      padding: 2rem;
     }
 
     .container {
-      margin-top: 100px;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 30px 40px;
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-      max-width: 600px;
-      width: 100%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
       backdrop-filter: blur(10px);
+      border-radius: var(--radius-lg);
+      padding: 3rem;
+      width: 100%;
+      max-width: 700px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      animation: fadeUp 0.6s ease forwards;
+      text-align: center;
     }
 
     h2 {
-      font-weight: 600;
       font-size: 2.5rem;
-      margin-bottom: 25px;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
     }
 
     textarea {
       width: 100%;
-      min-height: 120px;
-      padding: 15px 20px;
-      font-size: 1.1rem;
-      border-radius: 12px;
-      border: none;
+      min-height: 150px;
+      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border);
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text-main);
       resize: vertical;
-      box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-      transition: background 0.3s ease;
-      font-family: 'Poppins', Arial, sans-serif;
-    }
-
-    textarea::placeholder {
-      color: #ddd;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+      transition: var(--transition);
+      font-family: 'Outfit', sans-serif;
     }
 
     textarea:focus {
       outline: none;
-      background: rgba(255, 255, 255, 0.3);
-      box-shadow: 0 0 8px #a29bfe;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-glow);
     }
 
     button {
-      margin-top: 20px;
-      background: #6c63ff;
-      color: white;
-      border: none;
-      padding: 15px 35px;
-      font-size: 1.2rem;
+      padding: 1rem 3rem;
+      border-radius: 50px;
       font-weight: 600;
-      border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 6px 15px rgba(108, 99, 255, 0.6);
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      font-family: 'Poppins', Arial, sans-serif;
+      transition: var(--transition);
+      border: none;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 2rem;
     }
 
     button:hover {
-      background: #5751d9;
-      box-shadow: 0 8px 20px rgba(87, 81, 217, 0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
     }
 
     #myCanvas {
-      margin-top: 30px;
       width: 100%;
       max-width: 100%;
       height: auto;
-      border-radius: 15px;
+      border-radius: var(--radius-md);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-      background-color: #1e1e2f;
-      border: none;
+      background-color: rgba(15, 23, 42, 0.6);
+      margin-top: 1rem;
+      display: block;
+      margin: 0 auto 2rem auto;
     }
 
     #downloadLink {
       display: inline-block;
-      margin-top: 25px;
-      padding: 12px 30px;
-      background: #ff6b6b;
+      padding: 1rem 3rem;
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
       color: white;
       font-weight: 600;
-      border-radius: 12px;
+      border-radius: 50px;
       text-decoration: none;
-      box-shadow: 0 6px 15px rgba(255, 107, 107, 0.6);
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      font-family: 'Poppins', Arial, sans-serif;
+      box-shadow: 0 6px 15px rgba(168, 85, 247, 0.3);
+      transition: var(--transition);
     }
 
     #downloadLink:hover {
-      background: #e55a5a;
-      box-shadow: 0 8px 20px rgba(229, 90, 90, 0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(236, 72, 153, 0.5);
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Header */
+    .app-header {
+      width: 100%;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .back-link {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .back-link:hover {
+      color: var(--primary);
+      transform: translateY(-50%) translateX(-5px);
     }
 
     footer {
+      margin-top: 20px;
       text-align: center;
-      margin-top: 100px;
-      margin-bottom: 0;
-      font-size: 17px;
-      color: #ccc;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      font-size: 20px;
+      color: var(--text-muted);
     }
 
-    /* Responsive styles */
+    /* Responsive */
     @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
       .container {
-        padding: 20px 25px;
-        max-width: 90%;
+        padding: 1.5rem;
       }
 
       h2 {
         font-size: 2rem;
       }
 
-      textarea {
-        font-size: 1rem;
-        min-height: 100px;
-      }
-
       button {
-        padding: 12px 25px;
-        font-size: 1rem;
-      }
-
-      #downloadLink {
-        padding: 10px 25px;
-        font-size: 1rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 10px;
-        height: auto;
-      }
-
-      .container {
-        padding: 15px 20px;
-        max-width: 100%;
-      }
-
-      h2 {
-        font-size: 1.5rem;
-      }
-
-      textarea {
-        font-size: 0.9rem;
-        min-height: 80px;
-      }
-
-      button {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-      }
-
-      #downloadLink {
-        padding: 8px 20px;
-        font-size: 0.9rem;
-      }
-
-      #myCanvas {
         width: 100%;
-        height: auto;
+      }
+
+      #downloadLink {
+        width: 100%;
+        text-align: center;
+      }
+
+      .back-link {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none;
+        justify-content: center;
+        margin-bottom: 1rem;
+        width: 100%;
       }
     }
   </style>
@@ -194,7 +225,10 @@
 
 <body>
   <div class="container">
-    <h2>Save Text as Image</h2>
+    <header class="app-header">
+      <a href="../index.html" class="back-link">← Back to Home</a>
+      <h2>Save Text as Image</h2>
+    </header>
     <textarea id="textInput" placeholder="Enter text here"></textarea>
     <button onclick="generateImage()">Save as Image</button>
     <canvas id="myCanvas" width="500" height="300"></canvas>
@@ -212,7 +246,7 @@
       const text = document.getElementById("textInput").value;
 
       // Style the text (adjust the font, color, etc.)
-      ctx.fillStyle = "#ffffff";  // Text color (white)
+      ctx.fillStyle = "White";  // Text color (white)
       ctx.font = "30px Poppins, Arial, sans-serif";     // Font style and size
       ctx.textAlign = "center";    // Center text horizontally
       ctx.textBaseline = "middle"; // Center text vertically
@@ -225,6 +259,9 @@
       link.href = canvas.toDataURL("image/png");
     }
   </script>
+  <footer>
+    <p>Developed by Saarika 💗 and Groups</p>
+  </footer>
 </body>
 
 </html>
