@@ -423,7 +423,6 @@ footer p {
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(20px);
     position: fixed;
-    top: 2rem;
     bottom: 2rem;
     left: 50%;
     transform: translateX(-50%);
