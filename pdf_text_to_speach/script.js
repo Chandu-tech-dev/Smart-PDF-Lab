@@ -6,20 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const resumeBtn = document.getElementById('resume-btn');
     const cancelBtn = document.getElementById('cancel-btn');
     const voiceSelect = document.getElementById('voice-select');
-    const extractBtn = document.getElementById('extract-btn');
-    const startPageInput = document.getElementById('start-page');
-    const endPageInput = document.getElementById('end-page');
-    const rateInput = document.getElementById('rate');
-    const pitchInput = document.getElementById('pitch');
-    const rateValue = document.getElementById('rate-value');
-    const pitchValue = document.getElementById('pitch-value');
 
     let speechSynthesisUtterance;
     let isPaused = false;
     let wordSpans = [];
     let currentWordIndex = -1;
     let voices = [];
-    let pdfDocument = null;
 
     function clearHighlight() {
         if (currentWordIndex >= 0 && wordSpans[currentWordIndex]) {
@@ -46,33 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function populateVoiceList() {
-        // Get voices and sort to prioritize Google/Microsoft ones which are often clearer
-        voices = speechSynthesis.getVoices().sort(function (a, b) {
-            const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
-            if (aname.includes("GOOGLE") || aname.includes("MICROSOFT")) return -1;
-            if (bname.includes("GOOGLE") || bname.includes("MICROSOFT")) return 1;
-            if (aname < bname) return -1;
-            else if (aname == bname) return 0;
-            return +1;
-        });
-
+        voices = speechSynthesis.getVoices();
         voiceSelect.innerHTML = '';
         voices.forEach((voice, index) => {
             const option = document.createElement('option');
-            option.textContent = `${voice.name} (${voice.lang})`;
-            // Attempt to select a good default English voice
-            if (voice.default) option.textContent += ' -- DEFAULT';
-            option.setAttribute('data-lang', voice.lang);
-            option.setAttribute('data-name', voice.name);
+            option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' [default]' : ''}`;
             option.value = index;
             voiceSelect.appendChild(option);
         });
-
-        // Try to auto-select Google US English if available and nothing selected
-        if (voiceSelect.selectedIndex < 0) {
-            const googleVoiceIndex = voices.findIndex(v => v.name.includes("Google US English"));
-            if (googleVoiceIndex >= 0) voiceSelect.selectedIndex = googleVoiceIndex;
-        }
     }
 
     populateVoiceList();
@@ -112,114 +85,58 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select a valid PDF file.');
             return;
         }
-
+        const startPageInput = document.getElementById('start-page');
+        const endPageInput = document.getElementById('end-page');
         textContent.textContent = 'Loading PDF...';
         const arrayBuffer = await file.arrayBuffer();
-        try {
-            pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-            // Set input max values
-            startPageInput.max = pdfDocument.numPages;
-            endPageInput.max = pdfDocument.numPages;
-            startPageInput.value = 1;
-            endPageInput.value = pdfDocument.numPages;
-
-            textContent.textContent = `PDF Loaded (${pdfDocument.numPages} pages). Select pages and click 'Extract Text'.`;
-            extractBtn.disabled = false;
-
-            // Disable other controls until extraction
-            playBtn.disabled = true;
-            pauseBtn.disabled = true;
-            resumeBtn.disabled = true;
-            cancelBtn.disabled = true;
-        } catch (err) {
-            console.error(err);
-            textContent.textContent = "Error loading PDF.";
-        }
-    });
-
-    extractBtn.addEventListener('click', async () => {
-        if (!pdfDocument) return;
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
         let startPage = parseInt(startPageInput.value);
         let endPage = parseInt(endPageInput.value);
-
         if (isNaN(startPage) || startPage < 1) startPage = 1;
-        if (isNaN(endPage) || endPage > pdfDocument.numPages) endPage = pdfDocument.numPages;
-
+        if (isNaN(endPage) || endPage > pdf.numPages) endPage = pdf.numPages;
         if (startPage > endPage) {
             alert('Start page cannot be greater than end page.');
+            textContent.textContent = '';
             return;
         }
-
-        extractBtn.disabled = true;
-        textContent.textContent = 'Extracting text...';
+        startPageInput.max = pdf.numPages;
+        endPageInput.max = pdf.numPages;
+        startPageInput.value = startPage;
+        endPageInput.value = endPage;
 
         let fullText = '';
-        try {
-            for (let i = startPage; i <= endPage; i++) {
-                const page = await pdfDocument.getPage(i);
-                const textContentObj = await page.getTextContent();
-                const pageText = textContentObj.items.map(item => item.str).join(' ');
-                // Basic cleanup: replace multiple spaces with single space
-                fullText += pageText.replace(/\s+/g, ' ') + '\n\n';
-            }
-
-            // Text cleanup
-            fullText = fullText.replace(/\s+/g, ' ').trim();
-
-            if (!fullText) {
-                textContent.textContent = "No text found in selected pages.";
-                extractBtn.disabled = false;
-                return;
-            }
-
-            // Split text carefully to preserve word boundaries
-            // Using a more robust split that keeps punctuation with words or as separate tokens could be better,
-            // but for simple highlighting by word index:
-            const words = fullText.split(' ');
-
-            textContent.innerHTML = words.map((word, idx) => `<span data-index="${idx}">${word} </span>`).join('');
-            wordSpans = Array.from(textContent.querySelectorAll('span'));
-
-            playBtn.disabled = false;
-            pauseBtn.disabled = true;
-            resumeBtn.disabled = true;
-            cancelBtn.disabled = true;
-            currentWordIndex = -1;
-            extractBtn.disabled = false;
-
-        } catch (err) {
-            console.error(err);
-            textContent.textContent = "Error extracting text.";
-            extractBtn.disabled = false;
+        for (let i = startPage; i <= endPage; i++) {
+            const page = await pdf.getPage(i);
+            const textContentObj = await page.getTextContent();
+            const pageText = textContentObj.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n\n';
         }
+        // Split text into words and wrap each in a span
+        const words = fullText.trim().split(/\s+/);
+        textContent.innerHTML = words.map((word, idx) => `<span data-index="${idx}">${word} </span>`).join('');
+        wordSpans = Array.from(textContent.querySelectorAll('span'));
+        playBtn.disabled = false;
+        pauseBtn.disabled = true;
+        resumeBtn.disabled = true;
+        cancelBtn.disabled = true;
+        currentWordIndex = -1;
     });
-
-    // Update rate/pitch labels
-    rateInput.addEventListener('input', () => rateValue.textContent = rateInput.value);
-    pitchInput.addEventListener('input', () => pitchValue.textContent = pitchInput.value);
 
     playBtn.addEventListener('click', () => {
         if (!wordSpans.length) return;
         if (speechSynthesis.speaking) {
             speechSynthesis.cancel();
         }
-
-        // Re-construct text from spans to ensure sync
         const textToSpeak = wordSpans.map(span => span.textContent).join('');
         speechSynthesisUtterance = new SpeechSynthesisUtterance(textToSpeak);
+        currentWordIndex = -1;
 
-        // Apply Clarity Settings
+        // Set selected voice
         const selectedVoiceIndex = parseInt(voiceSelect.value);
         if (!isNaN(selectedVoiceIndex) && voices[selectedVoiceIndex]) {
             speechSynthesisUtterance.voice = voices[selectedVoiceIndex];
         }
-        speechSynthesisUtterance.rate = parseFloat(rateInput.value);
-        speechSynthesisUtterance.pitch = parseFloat(pitchInput.value);
-        speechSynthesisUtterance.volume = 1;
-
-        currentWordIndex = -1;
 
         speechSynthesisUtterance.onboundary = (event) => {
             if (event.name === 'word') {
