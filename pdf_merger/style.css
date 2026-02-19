@@ -237,22 +237,14 @@ p {
 }
 
 /* Actions Panel */
-.actions-panel {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(16px);
-    padding: 1.5rem;
-    display: flex;
-    justify-content: center;
-    border-top: 1px solid var(--glass-border);
-    z-index: 100;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
-}
+
 
 .primary-btn {
+    position: fixed;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
     background: linear-gradient(135deg, var(--primary), var(--primary-hover));
     color: white;
     border: none;
@@ -318,6 +310,16 @@ p {
     margin-bottom: 1.5rem;
 }
 
+footer {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    margin-top: 4rem;
+    color: var(--text-muted);
+}
+
 @keyframes spin {
     to {
         transform: rotate(360deg);
@@ -336,12 +338,10 @@ p {
     }
 }
 
-footer {
-    text-align: center;
-    color: var(--text-muted);
-    padding-bottom: 8rem;
-    /* Extra padding for bottom bar */
-}
+
+
+/* Extra padding for bottom bar */
+
 
 /* Responsive */
 @media (max-width: 768px) {
