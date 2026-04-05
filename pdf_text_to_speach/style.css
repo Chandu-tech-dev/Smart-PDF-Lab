@@ -187,8 +187,15 @@ select:focus {
   color: var(--text-main);
   font-family: 'Outfit', sans-serif;
   line-height: 1.8;
-  unicode-bidi: plaintext;   /* auto RTL/LTR per-paragraph */
-  word-break: break-word;    /* wrap long words in any script */
+  unicode-bidi: plaintext;   /* auto RTL/LTR per script */
+  word-break: break-word;
+}
+
+#text-content span.highlight {
+  background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(168,85,247,0.4));
+  border-radius: 4px;
+  color: #fff;
+  padding: 0 2px;
 }
 
 /* Buttons */

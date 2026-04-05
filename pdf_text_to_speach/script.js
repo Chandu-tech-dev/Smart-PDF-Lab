@@ -1,119 +1,65 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const fileInput = document.getElementById('file-input');
-    const textContent = document.getElementById('text-content');
-    const playBtn = document.getElementById('play-btn');
-    const pauseBtn = document.getElementById('pause-btn');
-    const resumeBtn = document.getElementById('resume-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-    const voiceSelect = document.getElementById('voice-select');
-    const extractBtn = document.getElementById('extract-btn');
-    const startPageInput = document.getElementById('start-page');
-    const endPageInput = document.getElementById('end-page');
-    const rateInput = document.getElementById('rate');
-    const pitchInput = document.getElementById('pitch');
-    const rateValue = document.getElementById('rate-value');
-    const pitchValue = document.getElementById('pitch-value');
+    const fileInput       = document.getElementById('file-input');
+    const displayArea     = document.getElementById('text-content');   // renamed to avoid clash with pdf.js
+    const playBtn         = document.getElementById('play-btn');
+    const pauseBtn        = document.getElementById('pause-btn');
+    const resumeBtn       = document.getElementById('resume-btn');
+    const cancelBtn       = document.getElementById('cancel-btn');
+    const voiceSelect     = document.getElementById('voice-select');
+    const extractBtn      = document.getElementById('extract-btn');
+    const startPageInput  = document.getElementById('start-page');
+    const endPageInput    = document.getElementById('end-page');
+    const rateInput       = document.getElementById('rate');
+    const pitchInput      = document.getElementById('pitch');
+    const rateValue       = document.getElementById('rate-value');
+    const pitchValue      = document.getElementById('pitch-value');
 
-    let speechSynthesisUtterance;
-    let isPaused = false;
-    let wordSpans = [];
-    let currentWordIndex = -1;
-    let voices = [];
-    let pdfDocument = null;
+    let utterance       = null;
+    let isPaused        = false;
+    let wordSpans       = [];
+    let currentWordIdx  = -1;
+    let voices          = [];
+    let pdfDocument     = null;
+    let detectedLangTag = 'en';   // BCP-47 primary subtag
 
-    // ─────────────────────────────────────────────────────────────────
-    // MULTILINGUAL AUTO-DETECTION ENGINE
-    // Automatically detects the language of the PDF and selects the best TTS voice
-    // ─────────────────────────────────────────────────────────────────
-    function detectLanguage(text) {
-        if (!text) return 'en-US';
-        
-        let arabic = 0, hindi = 0, chinese = 0, japanese = 0, korean = 0, russian = 0, hebrew = 0;
-        for (let i = 0; i < Math.min(text.length, 1000); i++) {
-            let code = text.charCodeAt(i);
-            if (code >= 0x0600 && code <= 0x06FF) arabic++;
-            else if (code >= 0x0900 && code <= 0x097F) hindi++;
-            else if (code >= 0x4E00 && code <= 0x9FFF) chinese++;
-            else if (code >= 0x3040 && code <= 0x30FF) japanese++;
-            else if (code >= 0xAC00 && code <= 0xD7AF) korean++;
-            else if (code >= 0x0400 && code <= 0x04FF) russian++;
-            else if (code >= 0x0590 && code <= 0x05FF) hebrew++;
-        }
-        
-        const max = Math.max(arabic, hindi, chinese, japanese, korean, russian, hebrew);
-        if (max > 10) {
-            if (max === arabic) return 'ar';
-            if (max === hindi) return 'hi';
-            if (max === chinese) return 'zh';
-            if (max === japanese) return 'ja';
-            if (max === korean) return 'ko';
-            if (max === russian) return 'ru';
-            if (max === hebrew) return 'he';
-        }
-        
-        // Latin scripts
-        const sample = text.substring(0, 1000).toLowerCase();
-        if (sample.match(/\b(el|la|los|de|que|y|en|un|una)\b/g)?.length > 3) return 'es';
-        if (sample.match(/\b(le|la|les|de|du|des|est|une|un)\b/g)?.length > 3) return 'fr';
-        if (sample.match(/\b(und|die|der|das|ist|ein)\b/g)?.length > 3) return 'de';
-        if (sample.match(/\b(il|la|di|è|un|una|che)\b/g)?.length > 3) return 'it';
-        if (sample.match(/\b(de|do|da|que|o|a|os|as)\b/g)?.length > 3) return 'pt';
-        
-        return 'en';
-    }
-
+    // ─── Highlight helpers ────────────────────────────────────────────
     function clearHighlight() {
-        if (currentWordIndex >= 0 && wordSpans[currentWordIndex]) {
-            wordSpans[currentWordIndex].classList.remove('highlight');
+        if (currentWordIdx >= 0 && wordSpans[currentWordIdx]) {
+            wordSpans[currentWordIdx].classList.remove('highlight');
         }
     }
 
     function highlightWord(index) {
         clearHighlight();
-        if (wordSpans[index]) {
-            wordSpans[index].classList.add('highlight');
-            // Scroll into view if needed
-            const containerTop = textContent.scrollTop;
-            const containerBottom = containerTop + textContent.clientHeight;
-            const wordTop = wordSpans[index].offsetTop;
-            const wordBottom = wordTop + wordSpans[index].offsetHeight;
-            if (wordTop < containerTop) {
-                textContent.scrollTop = wordTop;
-            } else if (wordBottom > containerBottom) {
-                textContent.scrollTop = wordBottom - textContent.clientHeight;
-            }
-            currentWordIndex = index;
-        }
+        if (!wordSpans[index]) return;
+        wordSpans[index].classList.add('highlight');
+        const top    = wordSpans[index].offsetTop;
+        const bottom = top + wordSpans[index].offsetHeight;
+        if (top    < displayArea.scrollTop) displayArea.scrollTop = top;
+        if (bottom > displayArea.scrollTop + displayArea.clientHeight)
+            displayArea.scrollTop = bottom - displayArea.clientHeight;
+        currentWordIdx = index;
     }
 
+    // ─── Voice list ───────────────────────────────────────────────────
     function populateVoiceList() {
-        // Get voices and sort to prioritize Google/Microsoft ones which are often clearer
-        voices = speechSynthesis.getVoices().sort(function (a, b) {
-            const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
-            if (aname.includes("GOOGLE") || aname.includes("MICROSOFT")) return -1;
-            if (bname.includes("GOOGLE") || bname.includes("MICROSOFT")) return 1;
-            if (aname < bname) return -1;
-            else if (aname == bname) return 0;
-            return +1;
+        voices = speechSynthesis.getVoices().sort((a, b) => {
+            const an = a.name.toUpperCase(), bn = b.name.toUpperCase();
+            const ap = an.includes('GOOGLE') || an.includes('MICROSOFT');
+            const bp = bn.includes('GOOGLE') || bn.includes('MICROSOFT');
+            if (ap && !bp) return -1;
+            if (!ap && bp) return 1;
+            return an < bn ? -1 : an > bn ? 1 : 0;
         });
 
         voiceSelect.innerHTML = '';
-        voices.forEach((voice, index) => {
-            const option = document.createElement('option');
-            option.textContent = `${voice.name} (${voice.lang})`;
-            // Attempt to select a good default English voice
-            if (voice.default) option.textContent += ' -- DEFAULT';
-            option.setAttribute('data-lang', voice.lang);
-            option.setAttribute('data-name', voice.name);
-            option.value = index;
-            voiceSelect.appendChild(option);
+        voices.forEach((v, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${v.name} (${v.lang})${v.default ? ' — DEFAULT' : ''}`;
+            opt.dataset.lang = v.lang;
+            voiceSelect.appendChild(opt);
         });
-
-        // Try to auto-select Google US English if available and nothing selected
-        if (voiceSelect.selectedIndex < 0) {
-            const googleVoiceIndex = voices.findIndex(v => v.name.includes("Google US English"));
-            if (googleVoiceIndex >= 0) voiceSelect.selectedIndex = googleVoiceIndex;
-        }
     }
 
     populateVoiceList();
@@ -121,221 +67,314 @@ document.addEventListener('DOMContentLoaded', () => {
         speechSynthesis.onvoiceschanged = populateVoiceList;
     }
 
+    // ─── Language detection (Unicode block counting) ──────────────────
+    function detectLang(text) {
+        const counts = {
+            ar: 0, hi: 0, ta: 0, te: 0, kn: 0, ml: 0, gu: 0, pa: 0, or: 0, bn: 0,
+            zh: 0, ja: 0, ko: 0, ru: 0, he: 0, th: 0, my: 0, km: 0, el: 0
+        };
+        const sample = text.slice(0, 2000);
+        for (let i = 0; i < sample.length; i++) {
+            const c = sample.charCodeAt(i);
+            if (c >= 0x0600 && c <= 0x06FF) counts.ar++;
+            else if (c >= 0x0900 && c <= 0x097F) counts.hi++;
+            else if (c >= 0x0B80 && c <= 0x0BFF) counts.ta++;
+            else if (c >= 0x0C00 && c <= 0x0C7F) counts.te++;
+            else if (c >= 0x0C80 && c <= 0x0CFF) counts.kn++;
+            else if (c >= 0x0D00 && c <= 0x0D7F) counts.ml++;
+            else if (c >= 0x0A80 && c <= 0x0AFF) counts.gu++;
+            else if (c >= 0x0A00 && c <= 0x0A7F) counts.pa++;
+            else if (c >= 0x0B00 && c <= 0x0B7F) counts.or++;
+            else if (c >= 0x0980 && c <= 0x09FF) counts.bn++;
+            else if (c >= 0x4E00 && c <= 0x9FFF) counts.zh++;
+            else if (c >= 0x3040 && c <= 0x30FF) counts.ja++;
+            else if (c >= 0xAC00 && c <= 0xD7AF) counts.ko++;
+            else if (c >= 0x0400 && c <= 0x04FF) counts.ru++;
+            else if (c >= 0x0590 && c <= 0x05FF) counts.he++;
+            else if (c >= 0x0E00 && c <= 0x0E7F) counts.th++;
+            else if (c >= 0x1000 && c <= 0x109F) counts.my++;
+            else if (c >= 0x1780 && c <= 0x17FF) counts.km++;
+            else if (c >= 0x0370 && c <= 0x03FF) counts.el++;
+        }
+        // Find dominant script
+        let bestLang = null, bestCount = 10;   // must beat threshold of 10
+        for (const [lang, cnt] of Object.entries(counts)) {
+            if (cnt > bestCount) { bestCount = cnt; bestLang = lang; }
+        }
+        if (bestLang) return bestLang;
+
+        // Latin-script languages via keyword frequency
+        const s = sample.toLowerCase();
+        const tests = [
+            ['es', /\b(el|la|los|de|que|y|en|un|una|es|con|por|para|se)\b/g],
+            ['fr', /\b(le|la|les|de|du|des|est|une|un|en|et|que|qui|pas)\b/g],
+            ['de', /\b(und|die|der|das|ist|ein|nicht|für|mit|von|sie|auch)\b/g],
+            ['it', /\b(il|la|di|è|un|una|che|e|in|non|si|con)\b/g],
+            ['pt', /\b(de|do|da|que|o|a|os|as|em|e|não|um|uma)\b/g],
+            ['nl', /\b(de|het|een|van|en|in|op|te|met|niet)\b/g],
+            ['pl', /\b(i|w|z|do|na|się|że|jest|jak|nie|ale)\b/g],
+            ['tr', /\b(bir|bu|ve|da|de|için|ile|ne|ama|var)\b/g],
+            ['id', /\b(yang|dan|di|dengan|ini|itu|untuk|dari|tidak)\b/g],
+        ];
+        let maxLang = 'en', maxMatches = 0;
+        for (const [lang, re] of tests) {
+            const n = (s.match(re) || []).length;
+            if (n > maxMatches) { maxMatches = n; maxLang = lang; }
+        }
+        return maxLang;
+    }
+
+    // Auto-select voice for a BCP-47 primary tag (e.g. 'hi', 'ar')
+    function autoSelectVoice(langTag) {
+        if (!voices.length) return;
+        let premiumMatch = -1, anyMatch = -1;
+        for (let i = 0; i < voices.length; i++) {
+            const vl = voices[i].lang.toLowerCase();
+            if (!vl.startsWith(langTag.toLowerCase())) continue;
+            const isPremium = voices[i].name.toLowerCase().includes('google') ||
+                              voices[i].name.toLowerCase().includes('microsoft');
+            if (isPremium && premiumMatch < 0) premiumMatch = i;
+            if (anyMatch < 0) anyMatch = i;
+        }
+        const idx = premiumMatch >= 0 ? premiumMatch : anyMatch;
+        if (idx >= 0) voiceSelect.selectedIndex = idx;
+    }
+
+    // ─── PDF Text Extraction (language-agnostic) ──────────────────────
+    // Uses PDF.js item ordering (already logical for bidi text).
+    // Groups items into visual lines via Y-coordinate, then joins them
+    // adding spaces only when the inter-item gap warrants it.
+    function extractPageText(items) {
+        if (!items || !items.length) return '';
+
+        // Filter truly empty items
+        const valid = items.filter(it => it.str && it.str.trim() !== '');
+        if (!valid.length) return '';
+
+        // Each item: transform[4]=x, transform[5]=y, width=width, str=text
+        // Compute a dynamic line threshold: median font height ÷ 2
+        const heights = valid
+            .map(it => Math.abs(it.transform[0]))   // scaleX ≈ font size
+            .filter(h => h > 0)
+            .sort((a, b) => a - b);
+        const medianFontSize = heights[Math.floor(heights.length / 2)] || 10;
+        const LINE_THRESH = medianFontSize * 0.5;
+
+        // Sort: top → bottom (Y descending in PDF space), then X ascending
+        const sorted = [...valid].sort((a, b) => {
+            const dy = b.transform[5] - a.transform[5];
+            if (Math.abs(dy) > LINE_THRESH) return dy;
+            return a.transform[4] - b.transform[4];
+        });
+
+        // Group into lines
+        const lines = [];
+        let curLine = [], curY = null;
+        for (const item of sorted) {
+            const y = item.transform[5];
+            if (curY === null || Math.abs(y - curY) > LINE_THRESH) {
+                if (curLine.length) lines.push(curLine);
+                curLine = [item];
+                curY = y;
+            } else {
+                curLine.push(item);
+            }
+        }
+        if (curLine.length) lines.push(curLine);
+
+        // Build text per line — insert space only when gap > 25% of char width
+        const lineStrs = lines.map(line => {
+            let out = '';
+            for (let i = 0; i < line.length; i++) {
+                const item = line[i];
+                if (i === 0) { out += item.str; continue; }
+                const prev = line[i - 1];
+                const prevEnd  = prev.transform[4] + (prev.width || 0);
+                const curStart = item.transform[4];
+                const gap = curStart - prevEnd;
+                const charW = item.width > 0 ? item.width / item.str.length : 0;
+                if (gap > Math.max(0.5, charW * 0.25)) out += ' ';
+                out += item.str;
+            }
+            return out.trim();
+        }).filter(l => l.length > 0);
+
+        // Join lines — blank line separates paragraphs
+        let result = '', prevBlank = false;
+        for (const line of lineStrs) {
+            if (!line) { prevBlank = true; continue; }
+            if (result) result += prevBlank ? '\n\n' : '\n';
+            result += line;
+            prevBlank = false;
+        }
+        return result;
+    }
+
+    // ─── Drag & Drop ──────────────────────────────────────────────────
     const dropZone = document.getElementById('drop-zone');
-
-    // Drag and Drop Logic
     dropZone.addEventListener('click', () => fileInput.click());
-
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;
-            const event = new Event('change');
-            fileInput.dispatchEvent(event);
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
         }
     });
 
-    fileInput.addEventListener('change', async (event) => {
-        if (event.target.files.length === 0) return;
-        const file = event.target.files[0];
+    // ─── File load ────────────────────────────────────────────────────
+    fileInput.addEventListener('change', async e => {
+        if (!e.target.files.length) return;
+        const file = e.target.files[0];
         if (!file || file.type !== 'application/pdf') {
             alert('Please select a valid PDF file.');
             return;
         }
-
-        textContent.textContent = 'Loading PDF...';
-        const arrayBuffer = await file.arrayBuffer();
+        displayArea.textContent = 'Loading PDF…';
         try {
-            pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-            // Set input max values
+            const buf = await file.arrayBuffer();
+            pdfDocument = await pdfjsLib.getDocument({ data: buf }).promise;
             startPageInput.max = pdfDocument.numPages;
-            endPageInput.max = pdfDocument.numPages;
+            endPageInput.max   = pdfDocument.numPages;
             startPageInput.value = 1;
-            endPageInput.value = pdfDocument.numPages;
-
-            textContent.textContent = `PDF Loaded (${pdfDocument.numPages} pages). Select pages and click 'Extract Text'.`;
+            endPageInput.value   = pdfDocument.numPages;
+            displayArea.textContent = `PDF Loaded (${pdfDocument.numPages} pages). Select pages and click 'Extract Text'.`;
             extractBtn.disabled = false;
-
-            // Disable other controls until extraction
-            playBtn.disabled = true;
-            pauseBtn.disabled = true;
-            resumeBtn.disabled = true;
-            cancelBtn.disabled = true;
+            playBtn.disabled = pauseBtn.disabled = resumeBtn.disabled = cancelBtn.disabled = true;
         } catch (err) {
             console.error(err);
-            textContent.textContent = "Error loading PDF.";
+            displayArea.textContent = 'Error loading PDF.';
         }
     });
 
+    // ─── Extract text ─────────────────────────────────────────────────
     extractBtn.addEventListener('click', async () => {
         if (!pdfDocument) return;
 
-        let startPage = parseInt(startPageInput.value);
-        let endPage = parseInt(endPageInput.value);
-
-        if (isNaN(startPage) || startPage < 1) startPage = 1;
-        if (isNaN(endPage) || endPage > pdfDocument.numPages) endPage = pdfDocument.numPages;
-
-        if (startPage > endPage) {
-            alert('Start page cannot be greater than end page.');
-            return;
-        }
+        let startPage = parseInt(startPageInput.value) || 1;
+        let endPage   = parseInt(endPageInput.value)   || pdfDocument.numPages;
+        startPage = Math.max(1, Math.min(startPage, pdfDocument.numPages));
+        endPage   = Math.max(startPage, Math.min(endPage, pdfDocument.numPages));
 
         extractBtn.disabled = true;
-        textContent.textContent = 'Extracting text...';
+        displayArea.textContent = 'Extracting text…';
 
         let fullText = '';
         try {
             for (let i = startPage; i <= endPage; i++) {
-                const page = await pdfDocument.getPage(i);
-                // Trust native PDF.js for extraction (supports all languages/bidi intrinsically)
-                const textContentObj = await page.getTextContent();
-                
-                let pageText = '';
-                let lastY = null;
-                for (let item of textContentObj.items) {
-                    if (lastY !== null && Math.abs(lastY - item.transform[5]) > 5) {
-                        pageText += '\n'; // Add line break if Y position changes significantly
-                    }
-                    pageText += item.str;
-                    if (item.hasEOL) {
-                        pageText += '\n';
-                    }
-                    lastY = item.transform[5];
-                }
-                
-                fullText += pageText + '\n\n';
+                const page    = await pdfDocument.getPage(i);
+                const tc      = await page.getTextContent();   // native pdf.js call
+                const pgText  = extractPageText(tc.items);
+                if (pgText) fullText += pgText + '\n\n';
             }
 
-            // Clean up text spacing while preserving line breaks
-            fullText = fullText.replace(/ +\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+            // Collapse 3+ newlines → 2, then trim
+            fullText = fullText.replace(/\n{3,}/g, '\n\n').trim();
 
             if (!fullText) {
-                textContent.textContent = "No text found in selected pages.";
+                displayArea.textContent = 'No text found in the selected pages.';
                 extractBtn.disabled = false;
                 return;
             }
 
-            // Auto-detect language and set voice
-            const detectedLang = detectLanguage(fullText);
-            let bestIndex = -1;
-            
-            // Try to find premium voice for language
-            for (let i = 0; i < voices.length; i++) {
-                if (voices[i].lang.toLowerCase().startsWith(detectedLang)) {
-                    if (voices[i].name.toLowerCase().includes('google') || voices[i].name.toLowerCase().includes('microsoft')) {
-                        bestIndex = i;
-                        break;
-                    }
-                    if (bestIndex === -1) bestIndex = i; // Fallback to first matching voice
+            // ── Detect language & auto-select voice ──
+            detectedLangTag = detectLang(fullText);
+            // Voices might not be loaded yet on first run — retry once
+            if (!voices.length) {
+                await new Promise(r => setTimeout(r, 300));
+                populateVoiceList();
+            }
+            autoSelectVoice(detectedLangTag);
+
+            // ── Render word spans ──
+            // Split on whitespace boundaries; newlines become <br>
+            const tokens = fullText.split(/\n/);
+            let html = '';
+            let spanIdx = 0;
+            wordSpans = [];
+
+            for (let t = 0; t < tokens.length; t++) {
+                const words = tokens[t].split(/\s+/).filter(w => w.length > 0);
+                for (const word of words) {
+                    html += `<span data-index="${spanIdx}">${word} </span>`;
+                    spanIdx++;
                 }
-            }
-            if (bestIndex !== -1) {
-                voiceSelect.selectedIndex = bestIndex;
+                if (t < tokens.length - 1) html += '<br>';   // paragraph/line break
             }
 
-            // Split into tokens preserving newlines as separate tokens
-            const words = fullText.split(/( |\n)/g).filter(w => w.length > 0);
-
-            textContent.innerHTML = words.map((word, idx) => {
-                if (word === '\n') return '<br>';
-                return `<span data-index="${idx}">${word} </span>`;
-            }).join('');
-            wordSpans = Array.from(textContent.querySelectorAll('span'));
+            displayArea.innerHTML = html;
+            wordSpans = Array.from(displayArea.querySelectorAll('span'));
 
             playBtn.disabled = false;
-            pauseBtn.disabled = true;
-            resumeBtn.disabled = true;
-            cancelBtn.disabled = true;
-            currentWordIndex = -1;
+            pauseBtn.disabled = resumeBtn.disabled = cancelBtn.disabled = true;
+            currentWordIdx = -1;
             extractBtn.disabled = false;
 
         } catch (err) {
             console.error(err);
-            textContent.textContent = "Error extracting text.";
+            displayArea.textContent = 'Error extracting text. Please try a different PDF.';
             extractBtn.disabled = false;
         }
     });
 
-    // Update rate/pitch labels
-    rateInput.addEventListener('input', () => rateValue.textContent = rateInput.value);
+    // ─── Rate / Pitch sliders ─────────────────────────────────────────
+    rateInput.addEventListener('input',  () => rateValue.textContent  = rateInput.value);
     pitchInput.addEventListener('input', () => pitchValue.textContent = pitchInput.value);
 
+    // ─── Play ─────────────────────────────────────────────────────────
     playBtn.addEventListener('click', () => {
         if (!wordSpans.length) return;
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
+        if (speechSynthesis.speaking) speechSynthesis.cancel();
+
+        const text = wordSpans.map(s => s.textContent).join('');
+        utterance  = new SpeechSynthesisUtterance(text);
+
+        const voiceIdx = parseInt(voiceSelect.value);
+        if (!isNaN(voiceIdx) && voices[voiceIdx]) {
+            utterance.voice = voices[voiceIdx];
+            utterance.lang  = voices[voiceIdx].lang;   // critical for correct pronunciation
+        } else {
+            utterance.lang = detectedLangTag;
         }
+        utterance.rate   = parseFloat(rateInput.value);
+        utterance.pitch  = parseFloat(pitchInput.value);
+        utterance.volume = 1;
+        currentWordIdx   = -1;
 
-        // Re-construct text from spans to ensure sync
-        const textToSpeak = wordSpans.map(span => span.textContent).join('');
-        speechSynthesisUtterance = new SpeechSynthesisUtterance(textToSpeak);
-
-        // Apply Clarity Settings
-        const selectedVoiceIndex = parseInt(voiceSelect.value);
-        if (!isNaN(selectedVoiceIndex) && voices[selectedVoiceIndex]) {
-            speechSynthesisUtterance.voice = voices[selectedVoiceIndex];
-            speechSynthesisUtterance.lang = voices[selectedVoiceIndex].lang;
-        }
-        speechSynthesisUtterance.rate = parseFloat(rateInput.value);
-        speechSynthesisUtterance.pitch = parseFloat(pitchInput.value);
-        speechSynthesisUtterance.volume = 1;
-
-        currentWordIndex = -1;
-
-        speechSynthesisUtterance.onboundary = (event) => {
-            if (event.name === 'word') {
-                let charCount = 0;
-                for (let i = 0; i < wordSpans.length; i++) {
-                    charCount += wordSpans[i].textContent.length;
-                    if (charCount > event.charIndex) {
-                        highlightWord(i);
-                        break;
-                    }
-                }
+        // Word highlight sync
+        utterance.onboundary = event => {
+            if (event.name !== 'word') return;
+            let charCount = 0;
+            for (let i = 0; i < wordSpans.length; i++) {
+                charCount += wordSpans[i].textContent.length;
+                if (charCount > event.charIndex) { highlightWord(i); break; }
             }
         };
 
-        speechSynthesisUtterance.onpause = () => {
-            isPaused = true;
-            pauseBtn.disabled = true;
-            resumeBtn.disabled = false;
-        };
-
-        speechSynthesisUtterance.onresume = () => {
-            isPaused = false;
-            pauseBtn.disabled = false;
-            resumeBtn.disabled = true;
-        };
-
-        speechSynthesisUtterance.onend = () => {
+        utterance.onpause  = () => { isPaused = true;  pauseBtn.disabled = true;  resumeBtn.disabled = false; };
+        utterance.onresume = () => { isPaused = false; pauseBtn.disabled = false; resumeBtn.disabled = true;  };
+        utterance.onend    = () => {
             clearHighlight();
-            playBtn.disabled = false;
-            pauseBtn.disabled = true;
-            resumeBtn.disabled = true;
-            cancelBtn.disabled = true;
+            playBtn.disabled  = false;
+            pauseBtn.disabled = resumeBtn.disabled = cancelBtn.disabled = true;
+        };
+        utterance.onerror = e => {
+            console.error('SpeechSynthesis error:', e.error);
+            playBtn.disabled  = false;
+            pauseBtn.disabled = resumeBtn.disabled = cancelBtn.disabled = true;
         };
 
-        speechSynthesis.speak(speechSynthesisUtterance);
-        playBtn.disabled = true;
+        speechSynthesis.speak(utterance);
+        playBtn.disabled  = true;
         pauseBtn.disabled = false;
         resumeBtn.disabled = true;
         cancelBtn.disabled = false;
         isPaused = false;
     });
 
+    // ─── Pause ────────────────────────────────────────────────────────
     pauseBtn.addEventListener('click', () => {
         if (speechSynthesis.speaking && !isPaused) {
             speechSynthesis.pause();
@@ -345,31 +384,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ─── Resume ───────────────────────────────────────────────────────
     resumeBtn.addEventListener('click', () => {
         if (isPaused) {
             speechSynthesis.resume();
             isPaused = false;
-            pauseBtn.disabled = false;
+            pauseBtn.disabled  = false;
             resumeBtn.disabled = true;
         }
     });
 
+    // ─── Cancel ───────────────────────────────────────────────────────
     cancelBtn.addEventListener('click', () => {
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-        }
+        if (speechSynthesis.speaking) speechSynthesis.cancel();
         clearHighlight();
-        textContent.innerHTML = "";
-        fileInput.value = "";
-        document.getElementById('start-page').value = 1;
-        document.getElementById('end-page').value = 1;
+        displayArea.innerHTML   = '';
+        fileInput.value         = '';
+        startPageInput.value    = 1;
+        endPageInput.value      = 1;
         voiceSelect.selectedIndex = 0;
-        playBtn.disabled = true;
-        pauseBtn.disabled = true;
-        resumeBtn.disabled = true;
-        cancelBtn.disabled = true;
-        isPaused = false;
-        wordSpans = [];
-        currentWordIndex = -1;
+        playBtn.disabled = pauseBtn.disabled = resumeBtn.disabled = cancelBtn.disabled = true;
+        isPaused       = false;
+        wordSpans      = [];
+        currentWordIdx = -1;
+        detectedLangTag = 'en';
     });
 });
