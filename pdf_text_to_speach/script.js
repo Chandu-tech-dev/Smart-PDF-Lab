@@ -21,6 +21,47 @@ document.addEventListener('DOMContentLoaded', () => {
     let voices = [];
     let pdfDocument = null;
 
+    // ─────────────────────────────────────────────────────────────────
+    // MULTILINGUAL AUTO-DETECTION ENGINE
+    // Automatically detects the language of the PDF and selects the best TTS voice
+    // ─────────────────────────────────────────────────────────────────
+    function detectLanguage(text) {
+        if (!text) return 'en-US';
+        
+        let arabic = 0, hindi = 0, chinese = 0, japanese = 0, korean = 0, russian = 0, hebrew = 0;
+        for (let i = 0; i < Math.min(text.length, 1000); i++) {
+            let code = text.charCodeAt(i);
+            if (code >= 0x0600 && code <= 0x06FF) arabic++;
+            else if (code >= 0x0900 && code <= 0x097F) hindi++;
+            else if (code >= 0x4E00 && code <= 0x9FFF) chinese++;
+            else if (code >= 0x3040 && code <= 0x30FF) japanese++;
+            else if (code >= 0xAC00 && code <= 0xD7AF) korean++;
+            else if (code >= 0x0400 && code <= 0x04FF) russian++;
+            else if (code >= 0x0590 && code <= 0x05FF) hebrew++;
+        }
+        
+        const max = Math.max(arabic, hindi, chinese, japanese, korean, russian, hebrew);
+        if (max > 10) {
+            if (max === arabic) return 'ar';
+            if (max === hindi) return 'hi';
+            if (max === chinese) return 'zh';
+            if (max === japanese) return 'ja';
+            if (max === korean) return 'ko';
+            if (max === russian) return 'ru';
+            if (max === hebrew) return 'he';
+        }
+        
+        // Latin scripts
+        const sample = text.substring(0, 1000).toLowerCase();
+        if (sample.match(/\b(el|la|los|de|que|y|en|un|una)\b/g)?.length > 3) return 'es';
+        if (sample.match(/\b(le|la|les|de|du|des|est|une|un)\b/g)?.length > 3) return 'fr';
+        if (sample.match(/\b(und|die|der|das|ist|ein)\b/g)?.length > 3) return 'de';
+        if (sample.match(/\b(il|la|di|è|un|una|che)\b/g)?.length > 3) return 'it';
+        if (sample.match(/\b(de|do|da|que|o|a|os|as)\b/g)?.length > 3) return 'pt';
+        
+        return 'en';
+    }
+
     function clearHighlight() {
         if (currentWordIndex >= 0 && wordSpans[currentWordIndex]) {
             wordSpans[currentWordIndex].classList.remove('highlight');
@@ -159,14 +200,27 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             for (let i = startPage; i <= endPage; i++) {
                 const page = await pdfDocument.getPage(i);
+                // Trust native PDF.js for extraction (supports all languages/bidi intrinsically)
                 const textContentObj = await page.getTextContent();
-                const pageText = textContentObj.items.map(item => item.str).join(' ');
-                // Basic cleanup: replace multiple spaces with single space
-                fullText += pageText.replace(/\s+/g, ' ') + '\n\n';
+                
+                let pageText = '';
+                let lastY = null;
+                for (let item of textContentObj.items) {
+                    if (lastY !== null && Math.abs(lastY - item.transform[5]) > 5) {
+                        pageText += '\n'; // Add line break if Y position changes significantly
+                    }
+                    pageText += item.str;
+                    if (item.hasEOL) {
+                        pageText += '\n';
+                    }
+                    lastY = item.transform[5];
+                }
+                
+                fullText += pageText + '\n\n';
             }
 
-            // Text cleanup
-            fullText = fullText.replace(/\s+/g, ' ').trim();
+            // Clean up text spacing while preserving line breaks
+            fullText = fullText.replace(/ +\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 
             if (!fullText) {
                 textContent.textContent = "No text found in selected pages.";
@@ -174,12 +228,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Split text carefully to preserve word boundaries
-            // Using a more robust split that keeps punctuation with words or as separate tokens could be better,
-            // but for simple highlighting by word index:
-            const words = fullText.split(' ');
+            // Auto-detect language and set voice
+            const detectedLang = detectLanguage(fullText);
+            let bestIndex = -1;
+            
+            // Try to find premium voice for language
+            for (let i = 0; i < voices.length; i++) {
+                if (voices[i].lang.toLowerCase().startsWith(detectedLang)) {
+                    if (voices[i].name.toLowerCase().includes('google') || voices[i].name.toLowerCase().includes('microsoft')) {
+                        bestIndex = i;
+                        break;
+                    }
+                    if (bestIndex === -1) bestIndex = i; // Fallback to first matching voice
+                }
+            }
+            if (bestIndex !== -1) {
+                voiceSelect.selectedIndex = bestIndex;
+            }
 
-            textContent.innerHTML = words.map((word, idx) => `<span data-index="${idx}">${word} </span>`).join('');
+            // Split into tokens preserving newlines as separate tokens
+            const words = fullText.split(/( |\n)/g).filter(w => w.length > 0);
+
+            textContent.innerHTML = words.map((word, idx) => {
+                if (word === '\n') return '<br>';
+                return `<span data-index="${idx}">${word} </span>`;
+            }).join('');
             wordSpans = Array.from(textContent.querySelectorAll('span'));
 
             playBtn.disabled = false;
@@ -214,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedVoiceIndex = parseInt(voiceSelect.value);
         if (!isNaN(selectedVoiceIndex) && voices[selectedVoiceIndex]) {
             speechSynthesisUtterance.voice = voices[selectedVoiceIndex];
+            speechSynthesisUtterance.lang = voices[selectedVoiceIndex].lang;
         }
         speechSynthesisUtterance.rate = parseFloat(rateInput.value);
         speechSynthesisUtterance.pitch = parseFloat(pitchInput.value);

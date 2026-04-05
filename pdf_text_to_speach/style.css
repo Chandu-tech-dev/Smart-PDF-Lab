@@ -187,6 +187,8 @@ select:focus {
   color: var(--text-main);
   font-family: 'Outfit', sans-serif;
   line-height: 1.8;
+  unicode-bidi: plaintext;   /* auto RTL/LTR per-paragraph */
+  word-break: break-word;    /* wrap long words in any script */
 }
 
 /* Buttons */
