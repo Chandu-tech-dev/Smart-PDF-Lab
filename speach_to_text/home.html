@@ -3,37 +3,58 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Speech to Text Notes App</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <div id="content">
-
-
-    <div class="container">
+  <div class="main-wrapper">
+    <div class="app-card">
       <header class="app-header">
-        <a href="../index.html" class="back-link">← Back to Home</a>
+        <a href="../index.html" class="back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
         <h1>🎤 Speech to Text Notes</h1>
       </header>
-      <button id="start">Start Listening</button>
-      <button id="stop">Stop</button>
-      <textarea id="text" placeholder="Your voice will appear here..."></textarea>
-      <button id="save">Save Note</button>
-      <button id="delete" style="background-color:rgba(255, 0, 0, 0.618);">Delete All Notes</button>
-      <button id="Download">Download</button>
+
+      <div class="controls-group">
+        <button id="start" class="btn btn-primary">
+          <span class="icon">🎙️</span> Start Listening
+        </button>
+        <button id="stop" class="btn btn-secondary">
+          <span class="icon">⏹️</span> Stop
+        </button>
+      </div>
+
+      <div class="editor-container">
+        <textarea id="text" placeholder="Your voice will appear here..."></textarea>
+      </div>
+
+      <div class="actions-group">
+        <button id="save" class="btn btn-action">Save Note</button>
+        <button id="delete" class="btn btn-danger">Delete All</button>
+        <button id="Download" class="btn btn-action">Download PDF</button>
+      </div>
     </div>
 
-    <div class="notes-container">
-      <h2>📝 Saved Notes</h2>
-      <ol id="notesList">
+    <div class="notes-card">
+      <div class="notes-header">
+        <h2>📝 Saved Notes</h2>
+      </div>
+      <ol id="notesList" class="notes-list">
+        <!-- Notes will appear here -->
       </ol>
     </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
   <footer>
-    <p style="text-align: center; font-size: 20px;">Developed by Saarika 💗 and Groups</p>
+    <p>Developed by Saarika and Groups</p>
   </footer>
 </body>
 
