@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pauseBtn = document.getElementById('pause-btn');
     const resumeBtn = document.getElementById('resume-btn');
     const cancelBtn = document.getElementById('cancel-btn');
+    const extractBtn = document.getElementById('extract-btn');
+    const fileNameLabel = document.getElementById('file-name');
     const voiceSelect = document.getElementById('voice-select');
     const langFilter = document.getElementById('lang-filter');
     const rateRange = document.getElementById('rate-range');
@@ -13,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pitchVal = document.getElementById('pitch-val');
     const detectedLangBadge = document.getElementById('detected-lang');
     const langWarning = document.getElementById('lang-warning');
+
+    let selectedFile = null; // holds the chosen PDF file
 
     let utterance;
     let isPaused = false;
@@ -253,75 +257,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ─── File input & PDF parsing ────────────────────────────────────────────
-    fileInput.addEventListener('change', async (event) => {
-        if (!event.target.files.length) return;
-        const file = event.target.files[0];
+    // ─── File select: store file, show name, enable Extract button ───────────
+    function handleFileSelected(file) {
         if (!file || file.type !== 'application/pdf') {
             alert('Please select a valid PDF file.');
             return;
         }
-
-        const startPageInput = document.getElementById('start-page');
-        const endPageInput = document.getElementById('end-page');
-        textContent.textContent = 'Loading PDF…';
-
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-        let startPage = parseInt(startPageInput.value);
-        let endPage = parseInt(endPageInput.value);
-        if (isNaN(startPage) || startPage < 1) startPage = 1;
-        if (isNaN(endPage) || endPage > pdf.numPages) endPage = pdf.numPages;
-        if (startPage > endPage) {
-            alert('Start page cannot be greater than end page.');
-            textContent.textContent = '';
-            return;
+        selectedFile = file;
+        if (fileNameLabel) {
+            fileNameLabel.textContent = `📂 ${file.name}`;
+            fileNameLabel.classList.add('has-file');
         }
-        startPageInput.max = pdf.numPages;
-        endPageInput.max = pdf.numPages;
-        startPageInput.value = startPage;
-        endPageInput.value = endPage;
+        if (extractBtn) extractBtn.disabled = false;
 
-        let fullText = '';
-        for (let i = startPage; i <= endPage; i++) {
-            const page = await pdf.getPage(i);
-            const textContentObj = await page.getTextContent();
-            // Preserve spacing between items using hasEOL
-            const pageText = textContentObj.items
-                .map(item => item.str + (item.hasEOL ? '\n' : ' '))
-                .join('');
-            fullText += pageText + '\n\n';
-        }
-
-        // Detect language & update badge
-        detectedLang = detectLanguage(fullText);
-        if (detectedLangBadge) {
-            detectedLangBadge.textContent = `Detected: ${getLangName(detectedLang)} (${detectedLang})`;
-            detectedLangBadge.style.display = 'inline-block';
-        }
-
-        // Set text direction for RTL languages
-        const rtlLangs = ['ar', 'he', 'ur', 'fa'];
-        textContent.style.direction = rtlLangs.includes(detectedLang) ? 'rtl' : 'ltr';
-        textContent.style.textAlign = rtlLangs.includes(detectedLang) ? 'right' : 'left';
-
-        // Build word spans
-        const words = splitIntoWords(fullText.trim());
-        textContent.innerHTML = words
-            .map((word, idx) => `<span data-index="${idx}">${word} </span>`)
-            .join('');
-        wordSpans = Array.from(textContent.querySelectorAll('span'));
-
-        // Auto-select best matching voice
-        autoSelectVoiceForLang(detectedLang);
-
-        playBtn.disabled = false;
+        // Reset previous extraction state
+        wordSpans = [];
+        currentWordIndex = -1;
+        textContent.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Click <strong>Extract Text</strong> to read this PDF…</p>';
+        if (detectedLangBadge) detectedLangBadge.style.display = 'none';
+        hideLangWarning();
+        playBtn.disabled = true;
         pauseBtn.disabled = true;
         resumeBtn.disabled = true;
-        cancelBtn.disabled = true;
-        currentWordIndex = -1;
+        cancelBtn.disabled = false; // allow clearing the selection
+    }
+
+    fileInput.addEventListener('change', (event) => {
+        if (!event.target.files.length) return;
+        handleFileSelected(event.target.files[0]);
     });
+
+    // ─── Extract button: read pages & build word spans ────────────────────────
+    if (extractBtn) {
+        extractBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const startPageInput = document.getElementById('start-page');
+            const endPageInput = document.getElementById('end-page');
+
+            extractBtn.disabled = true;
+            extractBtn.textContent = '⏳ Extracting…';
+            textContent.textContent = 'Loading PDF…';
+
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+                let startPage = parseInt(startPageInput.value);
+                let endPage = parseInt(endPageInput.value);
+                if (isNaN(startPage) || startPage < 1) startPage = 1;
+                if (isNaN(endPage) || endPage > pdf.numPages) endPage = pdf.numPages;
+                if (startPage > endPage) {
+                    alert('Start page cannot be greater than end page.');
+                    textContent.textContent = '';
+                    extractBtn.disabled = false;
+                    extractBtn.textContent = '📄 Extract Text';
+                    return;
+                }
+                startPageInput.max = pdf.numPages;
+                endPageInput.max = pdf.numPages;
+                startPageInput.value = startPage;
+                endPageInput.value = endPage;
+
+                let fullText = '';
+                for (let i = startPage; i <= endPage; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContentObj = await page.getTextContent();
+                    const pageText = textContentObj.items
+                        .map(item => item.str + (item.hasEOL ? '\n' : ' '))
+                        .join('');
+                    fullText += pageText + '\n\n';
+                }
+
+                if (!fullText.trim()) {
+                    textContent.innerHTML = '<p style="text-align:center;color:var(--text-muted);">⚠️ No readable text found. This PDF may be image-based.</p>';
+                    extractBtn.disabled = false;
+                    extractBtn.textContent = '📄 Extract Text';
+                    return;
+                }
+
+                // Detect language & update badge
+                detectedLang = detectLanguage(fullText);
+                if (detectedLangBadge) {
+                    detectedLangBadge.textContent = `🌐 Detected: ${getLangName(detectedLang)} (${detectedLang})`;
+                    detectedLangBadge.style.display = 'inline-block';
+                }
+
+                // RTL support
+                const rtlLangs = ['ar', 'he', 'ur', 'fa'];
+                textContent.style.direction = rtlLangs.includes(detectedLang) ? 'rtl' : 'ltr';
+                textContent.style.textAlign = rtlLangs.includes(detectedLang) ? 'right' : 'left';
+
+                // Build word spans
+                const words = splitIntoWords(fullText.trim());
+                textContent.innerHTML = words
+                    .map((word, idx) => `<span data-index="${idx}">${word} </span>`)
+                    .join('');
+                wordSpans = Array.from(textContent.querySelectorAll('span'));
+
+                // Auto-select best voice
+                autoSelectVoiceForLang(detectedLang);
+
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+                resumeBtn.disabled = true;
+                cancelBtn.disabled = false;
+                currentWordIndex = -1;
+
+                extractBtn.textContent = '✅ Extracted';
+                // keep extract enabled so user can re-extract with different page range
+                extractBtn.disabled = false;
+
+            } catch (err) {
+                console.error('PDF extraction error:', err);
+                textContent.innerHTML = '<p style="text-align:center;color:#f87171;">❌ Failed to read PDF. Please try another file.</p>';
+                extractBtn.disabled = false;
+                extractBtn.textContent = '📄 Extract Text';
+            }
+        });
+    }
 
     // ─── Play ────────────────────────────────────────────────────────────────
     playBtn.addEventListener('click', () => {
@@ -493,8 +547,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (usingRV && rvAvailable()) responsiveVoice.cancel();
         usingRV = false;
         clearHighlight();
-        textContent.innerHTML = '';
+        selectedFile = null;
+        textContent.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Extracted text will appear here…</p>';
         fileInput.value = '';
+        if (fileNameLabel) { fileNameLabel.textContent = 'No file selected'; fileNameLabel.classList.remove('has-file'); }
+        if (extractBtn) { extractBtn.disabled = true; extractBtn.textContent = '📄 Extract Text'; }
         document.getElementById('start-page').value = 1;
         document.getElementById('end-page').value = 1;
         if (rateRange) rateRange.value = 1;

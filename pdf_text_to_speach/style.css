@@ -124,6 +124,41 @@ h3 {
   width: 100%;
 }
 
+/* Extract Row & File Name Display */
+.extract-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.file-name-label {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  background: rgba(15,23,42,0.4);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--glass-border);
+  flex: 1;
+  text-align: center;
+  min-width: 200px;
+}
+
+.file-name-label.has-file {
+  border-style: solid;
+  border-color: rgba(99,102,241,0.5);
+  color: #c7d2fe;
+}
+
+#extract-btn {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+  white-space: nowrap;
+}
+
 /* Language Detection Badge */
 .lang-badge {
   display: inline-flex;
