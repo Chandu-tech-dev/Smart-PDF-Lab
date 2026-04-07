@@ -165,10 +165,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showLangWarning(langCode) {
         if (!langWarning) return;
+        const langName = getLangName(langCode);
         langWarning.innerHTML = `
-            ⚠️ No installed voice found for <strong>${getLangName(langCode)}</strong>. 
-            Please install a <strong>${getLangName(langCode)}</strong> TTS voice from your OS settings, 
-            or choose a different language from the filter.`;
+            <div style="font-weight: 600; margin-bottom: 5px;">⚠️ No native voice found for ${langName}. Using cloud fallback if available.</div>
+            <div style="font-size: 0.85rem; color: #d97706;">
+                <strong>For the best offline quality, install the ${langName} Voice Pack on your OS:</strong><br>
+                • <strong>Windows:</strong> Go to Settings > Time & Language > Language & Region > Add "${langName}". Ensure "Text-to-speech" is checked.<br>
+                • <strong>Mac:</strong> Go to System Settings > Accessibility > Spoken Content > System Voice > Manage Voices > Download ${langName}.
+            </div>
+        `;
         langWarning.style.display = 'block';
     }
 
