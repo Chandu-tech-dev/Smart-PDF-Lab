@@ -41,16 +41,15 @@ body {
 
 /* Header */
 .app-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
   text-align: center;
   margin-bottom: 3rem;
-  position: relative;
 }
 
 .back-link {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
   color: var(--text-muted);
   text-decoration: none;
   transition: var(--transition);
@@ -58,11 +57,18 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--glass-border);
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  background: var(--glass-bg);
 }
 
 .back-link:hover {
   color: var(--primary);
-  transform: translateY(-50%) translateX(-5px);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99,102,241,0.2);
 }
 
 h1 {
@@ -101,11 +107,104 @@ h3 {
 /* Controls & Inputs */
 .input-group {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.input-group select,
+.input-group input[type="number"] {
+  width: 100%;
+}
+
+/* Language Detection Badge */
+.lang-badge {
+  display: inline-flex;
   align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.2));
+  border: 1px solid rgba(99,102,241,0.4);
+  color: #a5b4fc;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.3rem 0.9rem;
+  border-radius: 50px;
+  letter-spacing: 0.02em;
+}
+
+/* Language Warning */
+.lang-warning {
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+  border-radius: var(--radius-md);
+  color: #fbbf24;
+  font-size: 0.9rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+/* Speed / Pitch Sliders */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(15,23,42,0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.slider-row label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  min-width: 130px;
+  font-weight: 500;
+}
+
+.slider-row label span {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+input[type="range"] {
+  flex: 1;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--glass-border);
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(99,102,241,0.5);
+}
+
+input[type="range"]:focus {
+  box-shadow: none;
+  border-color: transparent;
 }
 
 label {
@@ -187,15 +286,18 @@ select:focus {
   color: var(--text-main);
   font-family: 'Outfit', sans-serif;
   line-height: 1.8;
-  unicode-bidi: plaintext;   /* auto RTL/LTR per script */
-  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
+/* Word highlight while speaking */
 #text-content span.highlight {
-  background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(168,85,247,0.4));
-  border-radius: 4px;
-  color: #fff;
+  background: linear-gradient(135deg, rgba(99,102,241,0.55), rgba(168,85,247,0.45));
+  border-radius: 3px;
   padding: 0 2px;
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.15s;
 }
 
 /* Buttons */
@@ -297,82 +399,34 @@ footer {
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .app-container {
-    padding: 1rem;
-  }
+/* ── Large Desktop (>1200px) ── */
+@media (min-width: 1200px) {
+  .app-container { max-width: 1100px; padding: 2rem 3rem; }
+  h1 { font-size: 3rem; }
+  .tool-card { padding: 3.5rem; }
+}
 
-  .app-header {
-    margin-bottom: 2rem;
-  }
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  .app-container { padding: 1.5rem; }
+  h1 { font-size: 2rem; }
+  h3 { font-size: 1rem; }
+  .tool-card { padding: 2rem; border-radius: 20px; }
+  .input-group { gap: 1rem; }
+}
 
-  h1 {
-    font-size: 2rem;
-  }
-
-  h3 {
-    font-size: 1rem;
-  }
-
-  .back-link {
-    position: relative;
-    top: 0;
-    left: 0;
-    transform: none;
-    justify-content: center;
-    margin-bottom: 1rem;
-  }
-
-  .back-link:hover {
-    transform: translateX(-5px);
-  }
-
-  .tool-card {
-    padding: 1.5rem;
-  }
-
-  .input-group {
-    gap: 1.5rem;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  #page-selection {
-    flex-direction: column;
-    width: 100%;
-    gap: 1rem !important;
-  }
-
-  #page-selection>div {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  #page-selection>div input {
-    width: 100px;
-  }
-
-  select,
-  input[type="number"] {
-    width: 100%;
-  }
-
-  /* Specific override for page inputs to not be full width if in row, but here we stack them nicely */
-  #start-page,
-  #end-page {
-    width: 50%;
-  }
-
-  #controls {
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-
-  button {
-    width: 100%;
-    padding: 1rem;
-  }
+/* ── Mobile (≤480px) ── */
+@media (max-width: 480px) {
+  .app-container { padding: 0.75rem; }
+  h1 { font-size: 1.6rem; }
+  .back-link { font-size: 0.8rem; padding: 0.3rem 0.8rem; }
+  .tool-card { padding: 1.25rem 1rem; border-radius: 16px; }
+  .upload-zone { padding: 2rem 1rem; }
+  #page-selection { flex-direction: column !important; gap: 0.75rem !important; }
+  #page-selection > div { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  #start-page, #end-page { width: 50%; }
+  #controls { flex-direction: column; gap: 0.65rem; }
+  button { width: 100%; padding: 0.9rem; }
+  .slider-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .slider-row label { min-width: unset; }
 }

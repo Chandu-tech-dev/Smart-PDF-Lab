@@ -6,6 +6,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PDF Text to Speech | Smart PDF Lab</title>
+    <meta name="description" content="Upload any PDF and listen to its content in 30+ languages with natural voices." />
     <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -17,10 +18,12 @@
         <header class="app-header">
             <a href="../index.html" class="back-link">← Back to Home</a>
             <h1>PDF Text to Speech</h1>
-            <h3>Upload a PDF, select pages, and listen to the content with natural voices.</h3>
+            <h3>Upload a PDF, select pages, and listen to the content with natural voices in any language.</h3>
         </header>
 
         <main class="tool-card">
+
+            <!-- Upload Zone -->
             <div class="upload-zone" id="drop-zone">
                 <input type="file" id="file-input" accept="application/pdf" hidden />
                 <div class="icon-upload">🎧</div>
@@ -28,8 +31,9 @@
                 <p>or click to browse</p>
             </div>
 
+            <!-- Page Selection -->
             <div class="input-group">
-                <div id="page-selection" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                <div id="page-selection" style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
                     <div>
                         <label for="start-page">Start Page:</label>
                         <input type="number" id="start-page" min="1" value="1" />
@@ -38,57 +42,70 @@
                         <label for="end-page">End Page:</label>
                         <input type="number" id="end-page" min="1" value="1" />
                     </div>
-                    <button id="extract-btn" disabled
-                        style="padding: 0.5rem 1rem; border-radius: 20px; border: none; background: var(--primary); color: white; cursor: pointer;">
-                        Extract Text
-                    </button>
                 </div>
             </div>
 
+            <!-- Detected Language Badge -->
+            <div style="margin-bottom:8px;">
+                <span id="detected-lang" class="lang-badge" style="display:none;"></span>
+            </div>
+
+            <!-- Language Warning -->
+            <div id="lang-warning" class="lang-warning" style="display:none;"></div>
+
+            <!-- Language Filter -->
             <div class="input-group">
-                <div style="flex: 1; min-width: 250px;">
-                    <label for="voice-select">Select Voice:</label>
-                    <select id="voice-select" style="width: 100%;"></select>
+                <label for="lang-filter">Filter by Language:</label>
+                <select id="lang-filter">
+                    <option value="">🌐 All Languages</option>
+                </select>
+            </div>
+
+            <!-- Voice Select -->
+            <div class="input-group">
+                <label for="voice-select">Select Voice:</label>
+                <select id="voice-select"></select>
+            </div>
+
+            <!-- Rate & Pitch Controls -->
+            <div class="slider-group">
+                <div class="slider-row">
+                    <label for="rate-range">Speed: <span id="rate-val">1.0×</span></label>
+                    <input type="range" id="rate-range" min="0.5" max="2" step="0.1" value="1" />
+                </div>
+                <div class="slider-row">
+                    <label for="pitch-range">Pitch: <span id="pitch-val">1.0</span></label>
+                    <input type="range" id="pitch-range" min="0" max="2" step="0.1" value="1" />
                 </div>
             </div>
 
-            <div class="input-group" style="gap: 2rem;">
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                    <label for="rate">Speed (Rate): <span id="rate-value">1.0</span></label>
-                    <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1"
-                        style="accent-color: var(--primary); width: 200px;" />
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                    <label for="pitch">Pitch: <span id="pitch-value">1.0</span></label>
-                    <input type="range" id="pitch" min="0.5" max="2" value="1" step="0.1"
-                        style="accent-color: var(--secondary); width: 200px;" />
-                </div>
+            <!-- Text Content Display -->
+            <div id="text-content" aria-label="Extracted text from PDF" aria-live="polite">
+                <p style="text-align:center;color:var(--text-muted);">Extracted text will appear here…</p>
             </div>
 
-            <div id="text-content" aria-label="Extracted text from PDF">
-                <p style="text-align: center; color: var(--text-muted);">Extracted text will appear here...</p>
-            </div>
-
+            <!-- Playback Controls -->
             <div id="controls">
-                <button id="play-btn" disabled>Play Speech</button>
-                <button id="pause-btn" disabled>Pause</button>
-                <button id="resume-btn" disabled>Resume</button>
-                <button id="cancel-btn" disabled>Cancel</button>
+                <button id="play-btn" disabled>▶ Play</button>
+                <button id="pause-btn" disabled>⏸ Pause</button>
+                <button id="resume-btn" disabled>⏯ Resume</button>
+                <button id="cancel-btn" disabled>⏹ Cancel</button>
             </div>
         </main>
 
         <footer>
-            <p>Developed by Saarika 💗 and Groups</p>
+            <p>Developed by Saarika and Groups</p>
         </footer>
     </div>
 
     <!-- pdf.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
     <script>
-        // Set worker globally if consistent path needed, 
-        // usually defined in script.js but ensuring compatibility
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
     </script>
+    <!-- ResponsiveVoice: fallback TTS for Kannada, Tamil, Telugu, etc. -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
     <script src="script.js"></script>
 </body>
 
